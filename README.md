@@ -2,6 +2,9 @@
 
 > ✨ 超酷的SVG动画转换工具，将SVG动画转换为高质量视频或GIF格式
 
+“本项目由阿里云ESA提供加速、计算和保护”
+![本地路径](public/esa.png)
+
 [![React](https://img.shields.io/badge/React-19.2.3-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-7.1.4-646CFF.svg)](https://vitejs.dev/)
