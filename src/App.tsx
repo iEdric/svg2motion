@@ -6,40 +6,41 @@ import type { ConverterSettings, SvgAnalysis } from './types.js';
 
 type Tab = 'code' | 'preview' | 'settings';
 
+interface Example {
+  name: string;
+  description: string;
+  filename: string;
+}
+
+// 示例数据
+const examples: Example[] = [
+  {
+    name: '杠杆原理',
+    description: 'F₁×L₁ = F₂×L₂ - 力与力臂的关系',
+    filename: 'code1.svg'
+  },
+  {
+    name: '惯性定律',
+    description: '牛顿第一定律 - 汽车刹车时的惯性反应',
+    filename: 'code2.svg'
+  },
+  {
+    name: '重力原理',
+    description: '重力方向始终垂直向下 - 自由落体演示',
+    filename: 'code3.svg'
+  }
+];
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('preview');
-  const [svgCode, setSvgCode] = useState<string>(`<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="400" height="400" fill="#0f172a" rx="20" />
-  <g transform="translate(200,200)">
-    <!-- Rotating glow -->
-    <circle r="100" fill="none" stroke="url(#gradient)" stroke-width="4" stroke-dasharray="10 20">
-      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite" />
-    </circle>
-    
-    <!-- Central Pulsing Core -->
-    <circle r="40" fill="#6366f1">
-      <animate attributeName="r" values="40;50;40" dur="2s" repeatCount="indefinite" />
-      <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite" />
-    </circle>
+  const [svgCode, setSvgCode] = useState<string>('');
 
-    <!-- Satellite -->
-    <circle r="10" fill="#f43f5e">
-       <animateMotion dur="3s" repeatCount="indefinite" path="M 0,-80 A 80,80 0 1,1 0,80 A 80,80 0 1,1 0,-80" />
-    </circle>
-  </g>
-  <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#f43f5e;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-</svg>`);
-  
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [analysis, setAnalysis] = useState<SvgAnalysis | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showExamples, setShowExamples] = useState(false);
 
   const [settings, setSettings] = useState<ConverterSettings>({
     fps: 30,
@@ -90,8 +91,68 @@ const App: React.FC = () => {
 
   useEffect(() => {
     converterRef.current = new SvgConverter();
-    updateLocalAnalysis(svgCode);
-  }, [updateLocalAnalysis]);
+
+    // 自动加载第一个示例（杠杆原理）
+    const loadDefaultExample = async () => {
+      try {
+        const response = await fetch(`/${examples[0].filename}`);
+        const svgContent = await response.text();
+        setSvgCode(svgContent);
+        updateLocalAnalysis(svgContent);
+      } catch (err) {
+        console.error('Failed to load default example:', err);
+        // 如果加载失败，使用默认的简单动画
+        const defaultSvg = `<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="400" height="400" fill="#0f172a" rx="20" />
+  <g transform="translate(200,200)">
+    <!-- Rotating glow -->
+    <circle r="100" fill="none" stroke="url(#gradient)" stroke-width="4" stroke-dasharray="10 20">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite" />
+    </circle>
+
+    <!-- Central Pulsing Core -->
+    <circle r="40" fill="#6366f1">
+      <animate attributeName="r" values="40;50;40" dur="2s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite" />
+    </circle>
+
+    <!-- Satellite -->
+    <circle r="10" fill="#f43f5e">
+       <animateMotion dur="3s" repeatCount="indefinite" path="M 0,-80 A 80,80 0 1,1 0,80 A 80,80 0 1,1 0,-80" />
+    </circle>
+  </g>
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f43f5e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>`;
+        setSvgCode(defaultSvg);
+        updateLocalAnalysis(defaultSvg);
+      }
+    };
+
+    loadDefaultExample();
+  }, []);
+
+  // 点击外部关闭示例菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('[data-examples-menu]')) {
+        setShowExamples(false);
+      }
+    };
+
+    if (showExamples) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExamples]);
 
   const handleSvgChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const code = e.target.value;
@@ -112,6 +173,21 @@ const App: React.FC = () => {
         setActiveTab('preview');
       };
       reader.readAsText(file);
+    }
+  };
+
+  const loadExample = async (example: Example) => {
+    try {
+      const response = await fetch(`/${example.filename}`);
+      const svgContent = await response.text();
+      setSvgCode(svgContent);
+      setResultUrl(null);
+      updateLocalAnalysis(svgContent);
+      setActiveTab('preview');
+      setShowExamples(false);
+    } catch (err) {
+      console.error('Failed to load example:', err);
+      setError('Failed to load example');
     }
   };
 
@@ -157,6 +233,47 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="relative lg:hidden" data-examples-menu>
+            <button
+              onClick={() => setShowExamples(!showExamples)}
+              className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border border-slate-700 flex items-center whitespace-nowrap"
+            >
+              <i className="fas fa-lightbulb mr-2 text-yellow-400"></i>
+              Examples
+            </button>
+
+            {showExamples && (
+              <div className="absolute top-full right-0 mt-2 w-72 bg-slate-800/95 backdrop-blur-xl rounded-xl border border-slate-700/50 shadow-2xl shadow-black/50 z-50">
+                <div className="p-3">
+                  <div className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Choose an Example</div>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {examples.map((example, index) => (
+                      <button
+                        key={index}
+                        onClick={() => loadExample(example)}
+                        className="w-full text-left p-3 rounded-lg bg-slate-700/30 hover:bg-slate-600/50 border border-slate-600/30 hover:border-slate-500/50 transition-all duration-200 group"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-indigo-400 font-bold text-sm">{index + 1}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
+                              {example.name}
+                            </div>
+                            <div className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors mt-1">
+                              {example.description}
+                            </div>
+                          </div>
+                          <i className="fas fa-arrow-right text-slate-500 group-hover:text-indigo-400 transition-colors mt-1"></i>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           <label className="bg-slate-800 hover:bg-slate-700 text-white px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold transition-all cursor-pointer border border-slate-700 flex items-center whitespace-nowrap">
             <i className="fas fa-file-import mr-2 opacity-50 hidden sm:inline"></i>
             Import
@@ -213,10 +330,54 @@ const App: React.FC = () => {
                 <p className="text-xs text-slate-500">Paste or edit your SVG code</p>
               </div>
             </div>
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 rounded-full bg-red-500/60"></div>
-              <div className="w-2 h-2 rounded-full bg-yellow-500/60"></div>
-              <div className="w-2 h-2 rounded-full bg-green-500/60"></div>
+            <div className="flex items-center gap-3">
+              <div className="relative" data-examples-menu>
+                <button
+                  onClick={() => setShowExamples(!showExamples)}
+                  className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs rounded-lg border border-slate-600/50 transition-all duration-200 flex items-center gap-2"
+                >
+                  <i className="fas fa-lightbulb text-yellow-400 text-xs"></i>
+                  Examples
+                  <i className={`fas fa-chevron-${showExamples ? 'up' : 'down'} text-xs transition-transform duration-200`}></i>
+                </button>
+
+                {showExamples && (
+                  <div className="absolute top-full right-0 mt-2 w-80 bg-slate-800/95 backdrop-blur-xl rounded-xl border border-slate-700/50 shadow-2xl shadow-black/50 z-50">
+                    <div className="p-3">
+                      <div className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Choose an Example</div>
+                      <div className="space-y-2">
+                        {examples.map((example, index) => (
+                          <button
+                            key={index}
+                            onClick={() => loadExample(example)}
+                            className="w-full text-left p-3 rounded-lg bg-slate-700/30 hover:bg-slate-600/50 border border-slate-600/30 hover:border-slate-500/50 transition-all duration-200 group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <span className="text-indigo-400 font-bold text-sm">{index + 1}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
+                                  {example.name}
+                                </div>
+                                <div className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors mt-1">
+                                  {example.description}
+                                </div>
+                              </div>
+                              <i className="fas fa-arrow-right text-slate-500 group-hover:text-indigo-400 transition-colors mt-1"></i>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 rounded-full bg-red-500/60"></div>
+                <div className="w-2 h-2 rounded-full bg-yellow-500/60"></div>
+                <div className="w-2 h-2 rounded-full bg-green-500/60"></div>
+              </div>
             </div>
           </div>
           <div className="flex-1 relative overflow-hidden min-h-0">

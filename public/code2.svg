@@ -1,0 +1,204 @@
+<svg width="600" height="350" viewBox="0 0 600 350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 箭头标记 -->
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+    </marker>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+      <feOffset dx="2" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    text {
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      text-anchor: middle;
+    }
+    .title { font-size: 20px; font-weight: bold; fill: #333; }
+    .subtitle { font-size: 14px; fill: #555; }
+    .status-text { font-size: 18px; font-weight: bold; fill: #2980b9; }
+    
+    /* 整个场景的移动与停止 */
+    #car-group {
+      animation: drive-stop 6s infinite ease-out;
+    }
+
+    /* 车身的悬挂效果 (刹车时点头) */
+    #car-body {
+      transform-origin: 150px 200px;
+      animation: car-pitch 6s infinite ease-out;
+    }
+
+    /* 人的惯性前倾动画 */
+    #passenger-upper {
+      transform-box: fill-box;
+      transform-origin: bottom center; /* 腰部旋转 */
+      animation: inertia-lean 6s infinite ease-out;
+    }
+
+    /* 惯性箭头显示 */
+    #inertia-arrow {
+      opacity: 0;
+      animation: show-arrow 6s infinite;
+    }
+
+    /* 刹车灯 */
+    #brake-light {
+      fill: #550000;
+      animation: brake-glow 6s infinite;
+    }
+
+    /* 地面移动效果 (相对运动) */
+    #road-lines {
+      animation: road-move 6s infinite linear;
+    }
+
+    /* 关键帧定义 */
+    
+    /* 1. 汽车行驶与停止 */
+    @keyframes drive-stop {
+      0% { transform: translateX(-200px); }
+      40% { transform: translateX(150px); } /* 匀速行驶中 */
+      50% { transform: translateX(250px); } /* 刹车减速 */
+      55% { transform: translateX(250px); } /* 完全停止 */
+      85% { transform: translateX(250px); } /* 保持静止展示惯性 */
+      100% { transform: translateX(650px); } /* 驶离画面重置 */
+    }
+
+    /* 2. 人的惯性 (关键点：车停时，人继续前冲) */
+    @keyframes inertia-lean {
+      0%, 45% { transform: rotate(0deg); }
+      50% { transform: rotate(35deg); } /* 急刹瞬间，猛烈前倾 */
+      60% { transform: rotate(35deg); } 
+      70% { transform: rotate(0deg); }  /* 被安全带拉回/恢复 */
+      100% { transform: rotate(0deg); }
+    }
+
+    /* 3. 刹车时车头下沉 */
+    @keyframes car-pitch {
+      0%, 45% { transform: rotate(0deg); }
+      50% { transform: rotate(2deg); } /* 惯性导致车头下沉 */
+      60% { transform: rotate(0deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    /* 4. 刹车灯变亮 */
+    @keyframes brake-glow {
+      0%, 45% { fill: #550000; filter: none; }
+      46% { fill: #ff0000; filter: drop-shadow(0 0 5px red); } /* 亮灯 */
+      70% { fill: #ff0000; filter: drop-shadow(0 0 5px red); }
+      71% { fill: #550000; filter: none; }
+      100% { fill: #550000; filter: none; }
+    }
+
+    /* 5. 惯性箭头出现 */
+    @keyframes show-arrow {
+      0%, 45% { opacity: 0; transform: translate(0, 0); }
+      50% { opacity: 1; transform: translate(20px, 0); }
+      65% { opacity: 1; transform: translate(20px, 0); }
+      75% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    
+    /* 文字变化模拟 */
+    #status-text-content::after {
+      content: "匀速行驶 (Uniform Motion)";
+      animation: text-change 6s infinite;
+    }
+    /* SVG不支持伪元素动画文字，这里用多个text元素控制透明度 */
+    .text-state { animation: text-fade 6s infinite; opacity: 0; }
+    #txt-drive { animation-delay: 0s; }
+    #txt-brake { animation-delay: 2.5s; } /* 这里需要手动匹配时间比例 */
+
+  </style>
+
+  <!-- 背景与地面 -->
+  <rect width="100%" height="100%" fill="#f0f8ff" />
+  <line x1="0" y1="300" x2="600" y2="300" stroke="#333" stroke-width="4" />
+  
+  <!-- 路面虚线 (模拟速度感) -->
+  <g id="road-lines" stroke="#777" stroke-width="2" stroke-dasharray="20, 50">
+    <line x1="-100" y1="315" x2="700" y2="315" />
+  </g>
+
+  <!-- 标题 -->
+  <text x="300" y="40" class="title">牛顿第一定律 (惯性定律)</text>
+  <text x="300" y="65" class="subtitle">物体总保持静止或匀速直线运动，直到外力迫使它改变</text>
+
+  <!-- 状态文字 -->
+  <g>
+    <text x="300" y="100" class="status-text" id="txt-drive" style="animation: fade-1 6s infinite;">正在匀速行驶...</text>
+    <text x="300" y="100" class="status-text" id="txt-brake" fill="#e74c3c" style="animation: fade-2 6s infinite;">急刹车！(受到外力)</text>
+    <text x="300" y="130" class="status-text" id="txt-inertia" fill="#e67e22" font-size="16" style="animation: fade-3 6s infinite;">惯性：身体继续向前！</text>
+  </g>
+
+  <!-- 汽车组 -->
+  <g id="car-group">
+    <!-- 惯性指示箭头 (在人上方) -->
+    <g id="inertia-arrow" transform="translate(140, 160)">
+      <line x1="0" y1="0" x2="60" y2="0" stroke="#e74c3c" stroke-width="4" marker-end="url(#arrowhead)"/>
+      <text x="30" y="-10" fill="#e74c3c" font-size="14" font-weight="bold">惯性 (Inertia)</text>
+    </g>
+
+    <!-- 车身主体 -->
+    <g id="car-body">
+      <!-- 车壳 -->
+      <path d="M 50,280 L 250,280 L 250,220 L 200,160 L 100,160 L 50,220 Z" fill="#3498db" stroke="#2980b9" stroke-width="2" filter="url(#shadow)"/>
+      <!-- 车窗/内部 -->
+      <path d="M 105,170 L 195,170 L 235,220 L 65,220 Z" fill="#ecf0f1" />
+      
+      <!-- 刹车灯 -->
+      <rect id="brake-light" x="45" y="230" width="10" height="20" rx="2" />
+
+      <!-- 乘客 (分为下半身和上半身) -->
+      <g transform="translate(130, 220)">
+        <!-- 下半身 (固定在座位上) -->
+        <path d="M 0,0 L 20,0 L 20,10 L 0,10 Z" fill="#333" />
+        
+        <!-- 上半身 (这是发生惯性旋转的部分) -->
+        <g id="passenger-upper">
+          <!-- 躯干 -->
+          <rect x="-5" y="-50" width="20" height="50" rx="5" fill="#f1c40f" stroke="#333" />
+          <!-- 头 -->
+          <circle cx="5" cy="-65" r="15" fill="#f1c40f" stroke="#333" />
+          <!-- 眼睛 (朝右看) -->
+          <circle cx="10" cy="-65" r="2" fill="#000" />
+          <!-- 安全带示意 (随身体动) -->
+          <line x1="-5" y1="-50" x2="15" y2="0" stroke="#333" stroke-width="2" opacity="0.5"/>
+        </g>
+      </g>
+      
+      <!-- 方向盘 -->
+      <path d="M 180,200 L 180,180" stroke="#555" stroke-width="4" />
+      <ellipse cx="180" cy="180" rx="5" ry="15" fill="none" stroke="#555" stroke-width="2" transform="rotate(30, 180, 180)"/>
+    </g>
+
+    <!-- 车轮 (独立于车身pitch动画，贴地) -->
+    <g>
+      <circle cx="90" cy="280" r="25" fill="#333" stroke="#555" stroke-width="3">
+        <animateTransform attributeName="transform" type="rotate" from="0 90 280" to="360 90 280" dur="1s" repeatCount="indefinite" id="wheel-anim"/>
+      </circle>
+      <circle cx="90" cy="280" r="10" fill="#777" />
+      
+      <circle cx="210" cy="280" r="25" fill="#333" stroke="#555" stroke-width="3">
+        <animateTransform attributeName="transform" type="rotate" from="0 210 280" to="360 210 280" dur="1s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="210" cy="280" r="10" fill="#777" />
+    </g>
+  </g>
+  
+  <!-- 简单的CSS控制文字显隐逻辑替代SMIL -->
+  <style>
+    @keyframes fade-1 { 0% {opacity:1} 45% {opacity:0} 100% {opacity:0} }
+    @keyframes fade-2 { 0% {opacity:0} 46% {opacity:1} 70% {opacity:1} 100% {opacity:0} }
+    @keyframes fade-3 { 0% {opacity:0} 48% {opacity:1} 70% {opacity:1} 100% {opacity:0} }
+  </style>
+</svg>

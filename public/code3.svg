@@ -1,0 +1,154 @@
+<svg width="600" height="400" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 重力箭头标记 -->
+    <marker id="arrow-down" markerWidth="10" markerHeight="10" refX="5" refY="10" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L5,10 L10,0" fill="#e74c3c" />
+    </marker>
+    <!-- 虚线辅助线 -->
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eee" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <style>
+    text {
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      text-anchor: middle;
+    }
+    .label { font-size: 14px; fill: #555; }
+    .formula { font-size: 20px; font-weight: bold; fill: #333; }
+    .highlight { fill: #e74c3c; font-weight: bold; }
+    
+    /* 苹果下落动画 - 模拟重力加速 (ease-in) */
+    #apple-system {
+      animation: drop-bounce 3s infinite ease-in;
+    }
+
+    /* 右侧斜面摆动动画 */
+    #slope-group {
+      transform-box: fill-box;
+      transform-origin: center bottom;
+      animation: tilt-ground 6s infinite ease-in-out;
+    }
+
+    /* 必须让箭头保持竖直，抵消斜面的旋转 */
+    #gravity-arrow-slope {
+      animation: counter-rotate 6s infinite ease-in-out;
+      transform-box: fill-box;
+      transform-origin: top center; 
+    }
+
+    @keyframes drop-bounce {
+      0% { transform: translateY(0); }
+      40% { transform: translateY(0); } /* 悬停一会儿 */
+      70% { transform: translateY(220px); } /* 下落 */
+      80% { transform: translateY(200px); animation-timing-function: ease-out;} /* 弹起 */
+      90% { transform: translateY(220px); } /* 落地 */
+      100% { transform: translateY(220px); }
+    }
+
+    @keyframes tilt-ground {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(15deg); }
+      50% { transform: rotate(0deg); }
+      75% { transform: rotate(-15deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    /* 箭头反向旋转，以保持视觉上的"竖直向下" */
+    @keyframes counter-rotate {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(-15deg); }
+      50% { transform: rotate(0deg); }
+      75% { transform: rotate(15deg); }
+      100% { transform: rotate(0deg); }
+    }
+    
+    /* 文字淡入淡出 */
+    .fade-text {
+      animation: fade 3s infinite;
+    }
+    @keyframes fade {
+      0%, 50% { opacity: 0; }
+      70%, 100% { opacity: 1; }
+    }
+  </style>
+
+  <!-- 背景与网格 (暗示空间坐标) -->
+  <rect width="100%" height="100%" fill="#f9f9f9" />
+  <rect width="100%" height="350" fill="url(#grid)" />
+  
+  <!-- 标题区 -->
+  <text x="300" y="40" class="formula">重力 (Gravity)</text>
+  <text x="300" y="65" font-size="14" fill="#777">地球对物体的吸引力 | G = mg</text>
+
+  <!-- 地面 -->
+  <rect x="0" y="350" width="600" height="50" fill="#2c3e50" />
+  <text x="300" y="380" fill="#bdc3c7" font-size="12">地球表面 (Earth)</text>
+
+  <!-- ====== 左侧演示：公式与作用点 ====== -->
+  <g transform="translate(150, 100)">
+    <!-- 悬挂点/树枝 -->
+    <line x1="0" y1="-40" x2="0" y2="0" stroke="#8e44ad" stroke-width="2" />
+    <line x1="-20" y1="-40" x2="20" y2="-40" stroke="#8e44ad" stroke-width="4" />
+
+    <!-- 苹果系统 -->
+    <g id="apple-system">
+      <!-- 苹果主体 -->
+      <circle cx="0" cy="20" r="25" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+      <!-- 叶子 -->
+      <path d="M 0,-5 Q 10,-15 20,-5 Q 10,5 0,-5" fill="#27ae60" />
+      
+      <!-- 重心 (CG) -->
+      <circle cx="0" cy="20" r="3" fill="black" />
+      <line x1="-5" y1="20" x2="5" y2="20" stroke="white" stroke-width="1"/>
+      <line x1="0" y1="15" x2="0" y2="25" stroke="white" stroke-width="1"/>
+      
+      <!-- 重力向量 G -->
+      <line x1="0" y1="20" x2="0" y2="90" stroke="#c0392b" stroke-width="4" marker-end="url(#arrow-down)" />
+      <text x="30" y="70" class="highlight" font-size="16" text-anchor="start">G</text>
+      
+      <!-- 质量标签 -->
+      <text x="0" y="25" fill="white" font-size="10" font-weight="bold">m</text>
+    </g>
+
+    <!-- 公式推导文字 -->
+    <text x="0" y="-60" class="label" font-weight="bold">自由落体</text>
+    <g transform="translate(-80, 150)">
+       <text x="0" y="0" class="label" text-anchor="start">m = 2 kg</text>
+       <text x="0" y="20" class="label" text-anchor="start">g ≈ 9.8 N/kg</text>
+       <text x="0" y="45" class="formula" font-size="16" fill="#e74c3c" text-anchor="start">G = 19.6 N</text>
+    </g>
+  </g>
+
+  <!-- ====== 右侧演示：方向竖直向下 ====== -->
+  <g transform="translate(450, 250)">
+    <!-- 垂直参考线 (铅垂线原理) -->
+    <line x1="0" y1="-200" x2="0" y2="100" stroke="#bdc3c7" stroke-dasharray="5,5" />
+    <text x="0" y="-160" font-size="12" fill="#95a5a6"  text-anchor="middle" writing-mode="tb">竖直向下</text>
+
+    <!-- 动态斜面组 -->
+    <g id="slope-group">
+      <!-- 斜面底座 -->
+      <path d="M -80,0 L 80,0 L 0,30 Z" fill="#7f8c8d" /> <!-- 支点 -->
+      <rect x="-100" y="-10" width="200" height="10" fill="#95a5a6" rx="2" /> <!-- 板 -->
+      
+      <!-- 物体 (木块) -->
+      <rect x="-20" y="-50" width="40" height="40" fill="#f39c12" stroke="#d35400" stroke-width="2" />
+      
+      <!-- 物体重心 -->
+      <circle cx="0" cy="-30" r="3" fill="black" />
+
+      <!-- 重力箭头 (关键点：这里加了一个反向旋转的动画，使其始终垂直于屏幕底边) -->
+      <g id="gravity-arrow-slope" transform="translate(0, -30)">
+        <line x1="0" y1="0" x2="0" y2="70" stroke="#e74c3c" stroke-width="4" marker-end="url(#arrow-down)" />
+        <text x="15" y="60" fill="#e74c3c" font-weight="bold">G</text>
+      </g>
+    </g>
+    
+    <text x="0" y="100" class="label" font-weight="bold">方向演示</text>
+    <text x="0" y="120" font-size="12" fill="#777">无论地面如何倾斜</text>
+    <text x="0" y="135" font-size="12" fill="#e74c3c">重力始终垂直于水平面</text>
+  </g>
+
+</svg>
